@@ -13,45 +13,49 @@ public class MultiCursor {
         // note : we can't use intellij's Caret#clone because it can place caret at wrong columns
 
         var editor = jelixEditor.getEditor();
-        jelixEditor.getEditor().getCaretModel().runForEachCaret(caret -> {
-            var selStart = editor.offsetToLogicalPosition(caret.getSelectionStart());
-            var selEnd = editor.offsetToLogicalPosition(caret.getSelectionEnd());
-            var selLines = selEnd.line - selStart.line + 1;
-            var found = false;
-            var line = selStart.line - selLines + 1;
-            while (!found && line > 0) {
-                line--;
-                found = isLineValidForSelection(editor, line, selLines, selStart, selEnd);
-            }
-            if (found) copyCaret(editor, caret, line, selLines, selStart, selEnd);
-        });
+        for (int i = 0; i < jelixEditor.getCount(); i++) {
+            jelixEditor.getEditor().getCaretModel().runForEachCaret(caret -> {
+                var selStart = editor.offsetToLogicalPosition(caret.getSelectionStart());
+                var selEnd = editor.offsetToLogicalPosition(caret.getSelectionEnd());
+                var selLines = selEnd.line - selStart.line + 1;
+                var found = false;
+                var line = selStart.line - selLines + 1;
+                while (!found && line > 0) {
+                    line--;
+                    found = isLineValidForSelection(editor, line, selLines, selStart, selEnd);
+                }
+                if (found) copyCaret(editor, caret, line, selLines, selStart, selEnd);
+            });
+        }
         return Result.EXECUTE;
     }
 
     public static Result cloneBelow(JelixEditor jelixEditor) {
         var editor = jelixEditor.getEditor();
-        jelixEditor.getEditor().getCaretModel().runForEachCaret(caret -> {
-            var selStart = editor.offsetToLogicalPosition(caret.getSelectionStart());
-            var selEnd = editor.offsetToLogicalPosition(caret.getSelectionEnd());
-            var selLines = selEnd.line - selStart.line + 1;
-            var lineCount = editor.getDocument().getLineCount();
-            var found = false;
-            var line = selStart.line + selLines - 1;
-            while (!found && line + selLines < lineCount) {
-                line++;
-                found = isLineValidForSelection(editor, line, selLines, selStart, selEnd);
-            }
-            if (found) copyCaret(editor, caret, line, selLines, selStart, selEnd);
-        });
+        for (int i = 0; i < jelixEditor.getCount(); i++) {
+            jelixEditor.getEditor().getCaretModel().runForEachCaret(caret -> {
+                var selStart = editor.offsetToLogicalPosition(caret.getSelectionStart());
+                var selEnd = editor.offsetToLogicalPosition(caret.getSelectionEnd());
+                var selLines = selEnd.line - selStart.line + 1;
+                var lineCount = editor.getDocument().getLineCount();
+                var found = false;
+                var line = selStart.line + selLines - 1;
+                while (!found && line + selLines < lineCount) {
+                    line++;
+                    found = isLineValidForSelection(editor, line, selLines, selStart, selEnd);
+                }
+                if (found) copyCaret(editor, caret, line, selLines, selStart, selEnd);
+            });
+        }
         return Result.EXECUTE;
     }
 
     public static Result prevCursor(JelixEditor jelixEditor) {
-        return changePrimaryCaret(jelixEditor.getEditor(), false);
+        return changePrimaryCaret(jelixEditor.getEditor(), jelixEditor.getCount(), false);
     }
 
     public static Result nextCursor(JelixEditor jelixEditor) {
-        return changePrimaryCaret(jelixEditor.getEditor(), true);
+        return changePrimaryCaret(jelixEditor.getEditor(), jelixEditor.getCount(), true);
     }
 
     public static Result removeCursor(JelixEditor jelixEditor) {
@@ -98,18 +102,20 @@ public class MultiCursor {
         }
     }
 
-    private static Result changePrimaryCaret(Editor editor, boolean next) {
+    private static Result changePrimaryCaret(Editor editor, int count, boolean next) {
         var model = editor.getCaretModel();
         var carets = model.getAllCarets();
-        if (carets.size() == 0) {
+        int size = carets.size();
+        if (size == 0) {
             return Result.FAILED;
         }
-        Caret oldPrimary;
+        int i = carets.indexOf(model.getPrimaryCaret());
         if (next) {
-            oldPrimary = carets.get((carets.indexOf(model.getPrimaryCaret()) + 1) % carets.size());
+            i = (i + count) % size;
         } else {
-            oldPrimary = carets.get((carets.indexOf(model.getPrimaryCaret()) - 1 + carets.size()) % carets.size());
+            i = ((i - count) % size + size) % size;
         }
+        var oldPrimary = carets.get(i);
         // remove caret, then add it back with the same position and selection
         model.removeCaret(oldPrimary);
         var newPrimary = model.addCaret(oldPrimary.getLogicalPosition(), true);
