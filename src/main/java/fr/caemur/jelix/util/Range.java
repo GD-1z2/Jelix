@@ -17,6 +17,11 @@ public class Range {
         this.anchor = head;
     }
 
+    public Range(Range range) {
+        this.anchor = range.anchor;
+        this.head = range.head;
+    }
+
     public static void transform(CaretModel caret, Function<Range, Range> f) {
         caret.runForEachCaret(c -> {
             final var range = new Range(c.getOffset(), c.getLeadSelectionOffset());

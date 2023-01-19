@@ -1,12 +1,12 @@
 package fr.caemur.jelix.commands;
 
-import fr.caemur.jelix.*;
+import fr.caemur.jelix.JelixEditor;
 import fr.caemur.jelix.util.CharCategory;
 import fr.caemur.jelix.util.DocIter;
 import fr.caemur.jelix.util.Range;
 import fr.caemur.jelix.util.Result;
 
-import java.util.function.Function;
+import java.util.function.Consumer;
 
 import static fr.caemur.jelix.util.CharCategory.isLineEnding;
 import static fr.caemur.jelix.util.CharCategory.isWordBoundary;
@@ -61,12 +61,10 @@ public class WordMotions {
                 return;
             }
 
-            var head = c.getOffset();
-            var startRange = new Range(head, head);
+            var startRange = new Range(c.getOffset());
 
             for (int i = 0; i < jelixEditor.getCount(); i++) {
-                startRange = rangeToTarget(target, startRange,
-                    ed.getDocument().getImmutableCharSequence());
+                startRange = rangeToTarget(target, startRange, ed.getDocument().getImmutableCharSequence());
             }
 
             c.moveToOffset(startRange.head);
@@ -77,24 +75,20 @@ public class WordMotions {
 
     private static Range rangeToTarget(Target target, Range origin, CharSequence txt) {
         var isPrev = target.isPrev();
-        DocIter iter = new DocIter(txt, isPrev ? origin.head : origin.anchor);
-
-        // Reverse the iterator if needed for the motion direction.
+        var iter = new DocIter(txt, origin.head);
         if (isPrev) {
             iter.reverse();
         }
 
         // Function to advance index in the appropriate motion direction.
-        Function<Integer, Integer> advance = isPrev ? i -> i - 1 : i -> i + 1;
+        Consumer<Range> advance = r -> r.head += isPrev ? -1 : 1;
 
         // Initialize state variables.
-        var anchor = origin.anchor;
-        var head = origin.head;
+        var range = new Range(origin);
         var prevCh = iter.prev();
         if (prevCh.isPresent()) {
             iter.next();
         }
-
 
         // Skip any initial newline characters.
         while (true) {
@@ -104,32 +98,32 @@ public class WordMotions {
             }
             if (isLineEnding(ch.get())) {
                 prevCh = ch;
-                head = advance.apply(head);
+                advance.accept(range);
             } else {
                 iter.prev();
                 break;
             }
         }
         if (prevCh.map(CharCategory::isLineEnding).orElse(false)) {
-            anchor = head;
+            range.anchor = range.head;
         }
 
         // Find our target position(s).
-        var headStart = head;
+        var headStart = range.head;
         while (true) {
             var nextCh = iter.next();
             if (nextCh.isEmpty()) {
                 break;
             }
             if (prevCh.isEmpty() || reachedTarget(target, prevCh.get(), nextCh.get())) {
-                if (head == headStart) {
-                    anchor = head;
+                if (range.head == headStart) {
+                    range.anchor = range.head;
                 } else {
                     break;
                 }
             }
             prevCh = nextCh;
-            head = advance.apply(head);
+            advance.accept(range);
         }
 
         // Un-reverse the iterator if needed.
@@ -137,7 +131,7 @@ public class WordMotions {
             iter.reverse();
         }
 
-        return new Range(anchor, head);
+        return range;
     }
 
     private static boolean reachedTarget(Target target, char prevCh, char nextCh) {
