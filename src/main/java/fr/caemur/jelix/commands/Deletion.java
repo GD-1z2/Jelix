@@ -6,6 +6,16 @@ import fr.caemur.jelix.JelixEditor;
 import fr.caemur.jelix.util.Result;
 
 public class Deletion {
+    public static Result delete(JelixEditor jelixEditor) {
+        var ed = jelixEditor.getEditor();
+        WriteCommandAction.runWriteCommandAction(ed.getProject(), "", "",
+            () -> ed.getCaretModel().runForEachCaret(caret -> {
+                var doc = ed.getDocument();
+                doc.deleteString(caret.getSelectionStart(), caret.getSelectionEnd());
+            }));
+        return Result.EXECUTE;
+    }
+
     public static Result deleteWord(JelixEditor jelixEditor) {
         var ed = jelixEditor.getEditor();
         WriteCommandAction.runWriteCommandAction(ed.getProject(), "", "",

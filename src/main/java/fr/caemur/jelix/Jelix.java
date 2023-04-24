@@ -29,6 +29,8 @@ public class Jelix implements Disposable {
         new KeyboardShortcut(KeyStroke.getKeyStroke("control pressed W"), null),
         new KeyboardShortcut(KeyStroke.getKeyStroke("control pressed U"), null),
         new KeyboardShortcut(KeyStroke.getKeyStroke("control pressed K"), null),
+        new KeyboardShortcut(KeyStroke.getKeyStroke("alt pressed SEMICOLON"), null),
+        new KeyboardShortcut(KeyStroke.getKeyStroke("shift alt pressed SEMICOLON"), null),
     };
 
     public void init() {

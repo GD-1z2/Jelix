@@ -27,17 +27,21 @@ public class DocIter implements Iterator<Optional<Character>> {
         if (!hasNext()) {
             return Optional.empty();
         }
-        return Optional.of(reversed ? doc.charAt(--pos) : doc.charAt(pos++));
+        return Optional.of(doc.charAt(reversed ? --pos : pos++));
     }
 
     public Optional<Character> prev() {
         if (!hasPrev()) {
             return Optional.empty();
         }
-        return Optional.of(reversed ? doc.charAt(pos++) : doc.charAt(--pos));
+        return Optional.of(doc.charAt(reversed ? pos++ : --pos));
     }
 
     public void reverse() {
         reversed = !reversed;
+    }
+
+    public int getOffset() {
+        return pos;
     }
 }

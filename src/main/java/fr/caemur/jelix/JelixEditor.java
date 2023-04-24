@@ -14,6 +14,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 public class JelixEditor {
     private final Editor editor;
@@ -25,6 +26,9 @@ public class JelixEditor {
     private boolean isCounting = false;
     private final List<KeyStroke> keyStrokes = new ArrayList<>();
 
+    private @Nullable Consumer<JelixEditor> lastChange = null;
+    private @Nullable Consumer<JelixEditor> lastMotion = null;
+
     public JelixEditor(@NotNull Editor editor) {
         this.editor = editor;
         this.setActionProvider(new NormalProvider());
@@ -35,6 +39,7 @@ public class JelixEditor {
     public void setActionProvider(@Nullable CommandProvider commandProvider) {
         this.commandProvider = Objects.requireNonNullElseGet(commandProvider, NormalProvider::new);
         this.isCounting = this.commandProvider.isCounting();
+        SwingUtilities.invokeLater(() -> this.commandProvider.getCaretShape().apply(this.editor));
     }
 
     public void handleKey(@NotNull KeyStroke keyStroke) {
@@ -49,6 +54,10 @@ public class JelixEditor {
             result = this.commandProvider.handleKey(this, keyStroke);
         }
 
+        this.handleResult(result);
+    }
+
+    public void handleResult(@NotNull Result result) {
         // Update Widget
         final var proj = editor.getProject();
         if (proj != null) {
@@ -80,5 +89,22 @@ public class JelixEditor {
 
     public int getCount() {
         return count == 0 ? 1 : count;
+    }
+
+    public void setLastChange(@Nullable Consumer<JelixEditor> lastChange) {
+        // todo add to operators
+        this.lastChange = lastChange;
+    }
+
+    public void setLastMotion(@Nullable Consumer<JelixEditor> lastMotion) {
+        this.lastMotion = lastMotion;
+    }
+
+    public @Nullable Consumer<JelixEditor> getLastChange() {
+        return lastChange;
+    }
+
+    public @Nullable Consumer<JelixEditor> getLastMotion() {
+        return lastMotion;
     }
 }

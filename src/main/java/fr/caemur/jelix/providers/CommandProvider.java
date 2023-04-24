@@ -3,6 +3,7 @@ package fr.caemur.jelix.providers;
 import fr.caemur.jelix.Command;
 import fr.caemur.jelix.JelixEditor;
 import fr.caemur.jelix.Key;
+import fr.caemur.jelix.util.CaretShape;
 import fr.caemur.jelix.util.Result;
 
 import javax.swing.*;
@@ -18,6 +19,10 @@ public abstract class CommandProvider {
         }
     }
 
+    protected void bind(Command cmd, KeyStroke key) {
+        actions.put(key, cmd);
+    }
+
     public Result handleKey(JelixEditor editor, KeyStroke keyStroke) {
         var action = this.actions.get(keyStroke);
         if (action == null) {
@@ -29,5 +34,9 @@ public abstract class CommandProvider {
 
     public boolean isCounting() {
         return false;
+    }
+
+    public CaretShape getCaretShape() {
+        return CaretShape.BLOCK;
     }
 }

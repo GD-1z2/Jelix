@@ -116,13 +116,16 @@ public class MultiCursor {
             i = ((i - count) % size + size) % size;
         }
         var oldPrimary = carets.get(i);
+        var pos = oldPrimary.getLogicalPosition();
+        var selStart = oldPrimary.getSelectionStart();
+        var selEnd = oldPrimary.getSelectionEnd();
         // remove caret, then add it back with the same position and selection
         model.removeCaret(oldPrimary);
-        var newPrimary = model.addCaret(oldPrimary.getLogicalPosition(), true);
+        var newPrimary = model.addCaret(pos, true);
         if (newPrimary == null) {
             return Result.FAILED;
         }
-        newPrimary.setSelection(oldPrimary.getSelectionStart(), oldPrimary.getSelectionEnd());
+        newPrimary.setSelection(selStart, selEnd);
         return Result.EXECUTE;
     }
 }
